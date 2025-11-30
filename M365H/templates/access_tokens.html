@@ -189,7 +189,10 @@
         ],
         order: [[4, 'desc']],
         createdRow: function (row, data, dataIndex) {
-            if (new Date(data.expires_at) > new Date()) {
+            // Parse the expires_at timestamp and compare with current time
+            let expiresAt = new Date(data.expires_at + 'Z'); // Add 'Z' to treat as UTC
+            let now = new Date();
+            if (expiresAt > now) {
                 $(row).children().addClass('bg-success-subtle').addClass('text-success-emphasis');
             } else {
                 $(row).children().addClass('bg-danger-subtle').addClass('text-danger-emphasis');
