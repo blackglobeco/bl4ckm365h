@@ -12,13 +12,20 @@ import json, base64, uuid, urllib.parse
 import re
 import pyotp
 
+# Register datetime adapter for Python 3.12+ compatibility
+def adapt_datetime_iso(val):
+    """Adapt datetime.datetime to ISO 8601 date."""
+    return val.isoformat()
+
+sqlite3.register_adapter(datetime, adapt_datetime_iso)
+
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)),"version.txt")) as f:
     __version__ = f.read()
 
 # ========== Database ==========
 
 def init_db():
-    con = sqlite3.connect(app.config['graph_spy_db_path'])
+    con = sqlite3.connect(app.config['graph_spy_db_path'], detect_types=sqlite3.PARSE_DECLTYPES)
     con.execute('CREATE TABLE accesstokens (id INTEGER PRIMARY KEY AUTOINCREMENT, stored_at TEXT, issued_at TEXT, expires_at TEXT, description TEXT, user TEXT, resource TEXT, accesstoken TEXT)')
     con.execute('CREATE TABLE refreshtokens (id INTEGER PRIMARY KEY AUTOINCREMENT, stored_at TEXT, description TEXT, user TEXT, tenant_id TEXT, resource TEXT, foci INTEGER, refreshtoken TEXT)')
     con.execute('CREATE TABLE devicecodes (id INTEGER PRIMARY KEY AUTOINCREMENT, generated_at INTEGER, expires_at INTEGER, user_code TEXT, device_code TEXT, interval INTEGER, client_id TEXT, status TEXT, last_poll INTEGER)')
@@ -35,7 +42,7 @@ def init_db():
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db = g._database = sqlite3.connect(app.config['graph_spy_db_path'])
+        db = g._database = sqlite3.connect(app.config['graph_spy_db_path'], detect_types=sqlite3.PARSE_DECLTYPES)
     return db
 
 def query_db(query, args=(), one=False):
@@ -1623,6 +1630,7 @@ def init_routes():
             if not "users" in responseJson:
                 break
             teams_users += responseJson["users"]
+            gspy_log.debug(f"Retrieved {len(responseJson['value'])} users. {len(teams_users)} total users so far.")
             if not "skipToken" in responseJson:
                 return teams_users
             next_skiptoken = responseJson["skipToken"]
@@ -1699,7 +1707,7 @@ def init_routes():
                 })
                 response = requests.post(uri, headers=headers, json=body)
                 if response.status_code >= 200 and response.status_code < 300 and "Location" in response.headers:
-                    conversation_id_regex = re.search('https:\/\/emea\.ng\.msg\.teams\.microsoft\.com\/v1\/threads\/(.*)$', response.headers["Location"])
+                    conversation_id_regex = re.search(r'https://emea\.ng\.msg\.teams\.microsoft\.com/v1/threads/(.*)$', response.headers["Location"])
                     if conversation_id_regex:
                         conversation_id = conversation_id_regex.group(1)
                         created_conversations.append(conversation_id)
@@ -1718,7 +1726,7 @@ def init_routes():
             }
             response = requests.post(uri, headers=headers, json=body)
             if response.status_code >= 200 and response.status_code < 300 and "Location" in response.headers:
-                conversation_id_regex = re.search('https:\/\/emea\.ng\.msg\.teams\.microsoft\.com\/v1\/threads\/(.*)$', response.headers["Location"])
+                conversation_id_regex = re.search(r'https://emea\.ng\.msg\.teams\.microsoft\.com/v1/threads/(.*)$', response.headers["Location"])
                 if conversation_id_regex:
                     conversation_id = conversation_id_regex.group(1)
                     created_conversations.append(conversation_id)
@@ -1786,7 +1794,7 @@ def init_routes():
                 {
                     "id": "userDetails",
                     "method": "GET",
-                    "url": f"/users/{parsed_user_id}?$expand=transitiveMemberOf&$select=displayName,givenName,surname,userPrincipalName,mail,otherMails,proxyAddresses,mobilePhone,businessPhones,faxNumber,createdDateTime,lastPasswordChangeDateTime,refreshTokensValidFromDateTime,userType,companyName,jobTitle,department,officeLocation,streetAddress,city,state,country,preferredLanguage,surname,userPrincipalName,id,accountEnabled,passwordPolicies,licenseAssignmentStates,creationType,customSecurityAttributes,onPremisesSyncEnabled,onPremisesDistinguishedName,onPremisesSamAccountName,onPremisesUserPrincipalName,onPremisesDomainName,onPremisesImmutableId,onPremisesLastSyncDateTime,onPremisesSecurityIdentifier,securityIdentifier"
+                    "url": f"/users/{parsed_user_id}?$expand=transitiveMemberOf&$select=displayName,givenName,surname,userPrincipalName,mail,otherMails,proxyAddresses,mobilePhone,businessPhones,faxNumber,createdDateTime,lastPasswordChangeDateTime,refreshTokensValidFromDateTime,userType,companyName,jobTitle,department,officeLocation,streetAddress,city,state,country,preferredLanguage,surname,userPrincipalName,id,accountEnabled,passwordPolicies,licenseAssignmentStates,creationType,customSecurityAttributes,onPremisesSyncEnabled,onPremisesDistinguishedName,onPremisesSamAccountName,onPremisesDomainName,onPremisesImmutableId,onPremisesLastSyncDateTime,onPremisesSecurityIdentifier,securityIdentifier"
                 },
                 {
                     "id": "ownedObjects",
@@ -1934,8 +1942,8 @@ def main():
  /  _____/___________  ______ |  |__  /   _____/_____ ______ 
 /   \  __\_  __ \__  \ \____ \|  |  \ \_____  \\____ \   |  |
 \    \_\  \  | \/  __ \|  |_> |   \  \/        \  |_> \___  |
- \______  /__|  |____  |   __/|___|  /_______  /   ___/ ____|
-        \/           \/|__|        \/        \/|__|   \/
+ \______  /__|  |____  |   __/|___|  /_______  /|__|   \/
+        \/           \/|__|        \/        \/        
                 """)
     # Argument Parser
     import argparse
