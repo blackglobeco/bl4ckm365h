@@ -21,6 +21,22 @@
     --bs-btn-disabled-border-color: #dc3545;
 }
 
+/* Override DataTables pagination colors to red */
+.pagination .page-item.active .page-link {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+.pagination .page-link {
+    color: #dc3545;
+}
+
+.pagination .page-link:hover {
+    background-color: #bb2d3b;
+    border-color: #b02a37;
+    color: #fff;
+}
+
 /* Vertical align all text in datatables */
 table.dataTable tbody tr td {
     vertical-align: middle;
