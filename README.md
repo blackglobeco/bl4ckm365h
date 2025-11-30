@@ -6,5 +6,5 @@
 pio install -r requirememnts.txt
 
 # Run the app
-python 
+python M365H/m365h.py
 ```
