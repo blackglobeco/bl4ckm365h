@@ -3,7 +3,7 @@
 
 ```bash
 # Install requirements
-pip install -r requirememnts.txt
+pip install -r requirements.txt
 
 # Run the app
 python M365H/m365h.py
