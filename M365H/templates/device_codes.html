@@ -46,6 +46,15 @@
 <br>
 <div>
     <h1>Device Code List</h1>
+    <div class="col-md-5 mb-3">
+        <label for="device_code_url" class="form-label">Microsoft Device Code URL</label>
+        <div class="input-group">
+            <input type="text" class="form-control" id="device_code_url" value="https://microsoft.com/devicelogin" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard($('#device_code_url').val())">
+                <i class="fi fi-rr-copy-alt"></i>
+            </button>
+        </div>
+    </div>
     <button type="button" class="btn btn-primary" onclick="restartDeviceCodePolling()">Restart Polling</button>
     <table id="device_codes" class="table" style="table-layout:fixed; width:100%">
         <thead>
